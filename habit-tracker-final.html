@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habit Tracker</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #fdf6e3;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px 12px 100px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* ── Card ─────────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: #fffdf5;
+      border-radius: 18px;
+      box-shadow:
+        0 4px 6px rgba(0, 0, 0, 0.04),
+        0 12px 32px rgba(0, 0, 0, 0.09);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Gold-to-green top border */
+    .card::before {
+      content: '';
+      display: block;
+      height: 5px;
+      background: linear-gradient(90deg, #c9a227 0%, #a8c256 55%, #4caf7d 100%);
+    }
+
+    /* ── Header ───────────────────────────────────────── */
+    .card-header {
+      padding: 28px 28px 0;
+      text-align: center;
+    }
+
+    .card-header .bismillah {
+      font-family: 'Amiri', serif;
+      font-size: 1.5rem;
+      color: #c9a227;
+      line-height: 1;
+      margin-bottom: 6px;
+      opacity: 0.85;
+    }
+
+    .card-header h1 {
+      font-family: 'Amiri', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2c2a1e;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .card-header .subtitle {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: #8a8070;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ── Date Bar ─────────────────────────────────────── */
+    .date-bar {
+      margin: 20px 28px 0;
+      background: linear-gradient(90deg, #c9a227, #d4b340);
+      border-radius: 10px;
+      padding: 9px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .date-bar .date-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #fffbe8;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.85;
+    }
+
+    .date-bar .date-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    .date-bar .date-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    /* ── Tab Bar ──────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 6px;
+      margin: 20px 28px 0;
+      padding: 5px;
+      background: #f2ece0;
+      border-radius: 12px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px 0;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #8a8070;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    }
+
+    /* Active state */
+    .tab-btn.active {
+      background: #fffdf5;
+      color: #c9a227;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      outline: none;
+      border-bottom: 2.5px solid #c9a227;
+    }
+
+    .tab-btn:focus-visible {
+      outline: 2px solid #c9a227;
+      outline-offset: 2px;
+    }
+
+    /* ── Panel visibility ─────────────────────────────── */
+    .panel {
+      display: none;
+      margin: 20px 28px 28px;
+      min-height: 240px;
+      border-radius: 12px;
+      border: 2px dashed #e5dcca;
+      background: #faf6ec;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel.active {
+      display: flex;
+    }
+
+    /* Today panel hosts a list — override to block */
+    #panel-today.active {
+      display: block;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* Habits panel also hosts a list */
+    #panel-habits.active {
+      display: block;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .panel-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.84rem;
+      color: #b0a590;
+      letter-spacing: 0.03em;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: #4caf7d;
+    }
+
+    /* ── Content Area ─────────────────────────────────── */
+    .content-area {
+      margin: 20px 28px 28px;
+      min-height: 240px;
+      border-radius: 12px;
+      border: 2px dashed #e5dcca;
+      background: #faf6ec;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .content-area .empty-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f0e8c8, #d6ebb5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .content-area .empty-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: #c9a227;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .content-area .empty-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem;
+      color: #b0a590;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── FAB — Fixed "+" Button ───────────────────────── */
+    .fab {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c9a227 0%, #d4b340 100%);
+      box-shadow:
+        0 4px 14px rgba(201, 162, 39, 0.45),
+        0 2px 6px rgba(0, 0, 0, 0.12);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.16s, box-shadow 0.16s;
+    }
+
+    .fab:hover {
+      transform: scale(1.08) translateY(-2px);
+      box-shadow:
+        0 6px 20px rgba(201, 162, 39, 0.55),
+        0 3px 8px rgba(0, 0, 0, 0.14);
+    }
+
+    .fab:active {
+      transform: scale(0.97);
+    }
+
+    .fab svg {
+      width: 24px;
+      height: 24px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+
+    /* ── Divider line under header ────────────────────── */
+    .header-rule {
+      margin: 18px 28px 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e5dcca 20%, #e5dcca 80%, transparent);
+    }
+
+    /* ── Modal Overlay ────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 42, 30, 0.45);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    /* ── Modal Box ────────────────────────────────────── */
+    .modal {
+      background: #fffdf5;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      animation: modal-in 0.22s ease;
+    }
+
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(18px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+
+    /* Gold-to-green top border — matches card */
+    .modal::before {
+      content: '';
+      display: block;
+      height: 5px;
+      background: linear-gradient(90deg, #c9a227 0%, #a8c256 55%, #4caf7d 100%);
+    }
+
+    /* ── Modal Header ─────────────────────────────────── */
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 22px 0;
+    }
+
+    .modal-title {
+      font-family: 'Amiri', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2c2a1e;
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 50%;
+      background: #f2ece0;
+      color: #8a8070;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .modal-close:hover {
+      background: #e8dfc8;
+      color: #2c2a1e;
+    }
+
+    /* ── Modal Body ───────────────────────────────────── */
+    .modal-body {
+      padding: 22px 22px 8px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 11px 15px;
+      border: 2px solid #e5dcca;
+      border-radius: 10px;
+      background: #faf6ec;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: #2c2a1e;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    .modal-input::placeholder {
+      color: #c0b49a;
+    }
+
+    .modal-input:focus {
+      border-color: #c9a227;
+      box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.12);
+    }
+
+    /* ── Modal Footer ─────────────────────────────────── */
+    .modal-footer {
+      padding: 16px 22px 22px;
+    }
+
+    .modal-next {
+      width: 100%;
+      padding: 12px 0;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #c9a227, #d4b340);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: opacity 0.16s, transform 0.16s;
+    }
+
+    .modal-next:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .modal-next:active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ── Step Indicator ───────────────────────────────── */
+    .step-indicator {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #b0a590;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .step-indicator span {
+      color: #c9a227;
+      font-weight: 600;
+    }
+
+    /* ── Step Panels ──────────────────────────────────── */
+    .step-panel {
+      display: none;
+    }
+
+    .step-panel.active {
+      display: block;
+    }
+
+    /* ── Step Label ───────────────────────────────────── */
+    .step-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #8a8070;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* ── Choice Buttons ───────────────────────────────── */
+    .choice-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .choice-btn {
+      flex: 1;
+      min-width: 70px;
+      padding: 10px 8px;
+      border: 2px solid #e5dcca;
+      border-radius: 10px;
+      background: #faf6ec;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: #6b6355;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: 0.02em;
+      transition: border-color 0.16s, background 0.16s, color 0.16s, box-shadow 0.16s;
+    }
+
+    .choice-btn:hover {
+      border-color: #c9a227;
+      color: #c9a227;
+    }
+
+    .choice-btn.selected {
+      border-color: #c9a227;
+      background: linear-gradient(135deg, #fff8e1, #fdf3cc);
+      color: #b8901f;
+      box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.12);
+      font-weight: 600;
+    }
+
+    /* High / Medium / Low colour accents when selected */
+    .choice-btn[data-value="High"].selected {
+      border-color: #e05c4b;
+      background: linear-gradient(135deg, #fff1ee, #fde0db);
+      color: #c94030;
+      box-shadow: 0 0 0 3px rgba(224, 92, 75, 0.12);
+    }
+
+    .choice-btn[data-value="Medium"].selected {
+      border-color: #d4a130;
+      background: linear-gradient(135deg, #fff8e1, #fdf3cc);
+      color: #b88920;
+      box-shadow: 0 0 0 3px rgba(212, 161, 48, 0.12);
+    }
+
+    .choice-btn[data-value="Low"].selected {
+      border-color: #4caf7d;
+      background: linear-gradient(135deg, #edfbf4, #d4f0e2);
+      color: #2e8f5f;
+      box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.12);
+    }
+
+    /* ── Two-button footer row ────────────────────────── */
+    .modal-footer-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-back {
+      flex: 0 0 auto;
+      padding: 12px 18px;
+      border: 2px solid #e5dcca;
+      border-radius: 10px;
+      background: transparent;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #8a8070;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: border-color 0.16s, color 0.16s, background 0.16s;
+    }
+
+    .modal-back:hover {
+      border-color: #c9a227;
+      color: #c9a227;
+      background: #fdf8ea;
+    }
+
+    .modal-footer-row .modal-next {
+      flex: 1;
+    }
+
+    /* ── Time Picker ──────────────────────────────────── */
+    .time-input {
+      cursor: pointer;
+      letter-spacing: 0.06em;
+    }
+
+    .time-input::-webkit-calendar-picker-indicator {
+      opacity: 0.5;
+      cursor: pointer;
+      filter: invert(60%) sepia(30%) saturate(400%) hue-rotate(10deg);
+    }
+
+    .time-hint {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.74rem;
+      color: #b0a590;
+      margin-top: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Confirmation Screen ──────────────────────────── */
+    .confirm-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 0 8px;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .confirm-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #d4f0e2, #a8e6c3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes pop-in {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .confirm-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: #2e8f5f;
+      fill: none;
+      stroke-width: 2.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .confirm-title {
+      font-family: 'Amiri', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #2e8f5f;
+      letter-spacing: 0.01em;
+    }
+
+    .confirm-sub {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem;
+      color: #8a8070;
+      letter-spacing: 0.02em;
+    }
+
+    /* Hide step indicator on confirmation screen */
+    .step-indicator.hidden {
+      visibility: hidden;
+    }
+
+    /* ── Today List ───────────────────────────────────── */
+    .today-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .today-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 240px;
+      padding: 24px;
+    }
+
+    .today-empty .empty-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f0e8c8, #d6ebb5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .today-empty .empty-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: #c9a227;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .today-empty .empty-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.84rem;
+      color: #b0a590;
+      letter-spacing: 0.02em;
+      text-align: center;
+      max-width: 220px;
+      line-height: 1.5;
+    }
+
+    /* Each habit row */
+    .habit-row {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 14px 18px;
+      border-bottom: 1px solid #ede8db;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .habit-row:last-child {
+      border-bottom: none;
+    }
+
+    .habit-row:hover {
+      background: rgba(201, 162, 39, 0.05);
+    }
+
+    /* Custom checkbox */
+    .habit-checkbox {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      border: 2px solid #d4c9b0;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.18s, background 0.18s;
+    }
+
+    .habit-checkbox svg {
+      width: 13px;
+      height: 13px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .habit-row.done .habit-checkbox {
+      background: linear-gradient(135deg, #4caf7d, #2e8f5f);
+      border-color: #4caf7d;
+    }
+
+    .habit-row.done .habit-checkbox svg {
+      opacity: 1;
+    }
+
+    .habit-row.done .habit-name {
+      text-decoration: line-through;
+      color: #b0a590;
+    }
+
+    /* Text block */
+    .habit-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .habit-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #2c2a1e;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.18s, text-decoration 0.18s;
+    }
+
+    .habit-meta {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.73rem;
+      font-weight: 400;
+      color: #a89e8a;
+      margin-top: 2px;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Priority badge */
+    .priority-badge {
+      flex-shrink: 0;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .priority-badge.high {
+      background: #fff1ee;
+      color: #c94030;
+      border: 1px solid #f9c4be;
+    }
+
+    .priority-badge.medium {
+      background: #fff8e1;
+      color: #b88920;
+      border: 1px solid #f0da90;
+    }
+
+    .priority-badge.low {
+      background: #edfbf4;
+      color: #2e8f5f;
+      border: 1px solid #b2e6cf;
+    }
+
+    /* ── Progress Bar ─────────────────────────────────── */
+    .progress-wrap {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #ede8db;
+    }
+
+    .progress-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .progress-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: #8a8070;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .progress-count {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #2c2a1e;
+      letter-spacing: 0.01em;
+    }
+
+    .progress-count span {
+      color: #c9a227;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 99px;
+      background: #ede8db;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #c9a227 0%, #a8c256 55%, #4caf7d 100%);
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+    }
+
+    /* ── Section divider (Habits / Tasks) ─────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px 8px;
+    }
+
+    .section-header-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #b0a590;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .section-header-rule {
+      flex: 1;
+      height: 1px;
+      background: #ede8db;
+    }
+
+    .section-count-badge {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.67rem;
+      font-weight: 600;
+      color: #a89e8a;
+      background: #f0ead8;
+      border-radius: 20px;
+      padding: 2px 7px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Habits Tab — Management List ────────────────── */
+    .habits-list-wrap {
+      width: 100%;
+    }
+
+    .habits-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 240px;
+      padding: 24px;
+    }
+
+    .habits-empty .empty-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f0e8c8, #d6ebb5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .habits-empty .empty-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: #c9a227;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .habits-empty .empty-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.84rem;
+      color: #b0a590;
+      letter-spacing: 0.02em;
+      text-align: center;
+      max-width: 220px;
+      line-height: 1.5;
+    }
+
+    /* Individual habit card */
+    .habit-card {
+      padding: 14px 18px;
+      border-bottom: 1px solid #ede8db;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .habit-card:last-child {
+      border-bottom: none;
+    }
+
+    /* Info block inside card */
+    .habit-card-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .habit-card-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #2c2a1e;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Badge row */
+    .habit-card-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+    }
+
+    /* Frequency badge — teal/green */
+    .freq-badge {
+      flex-shrink: 0;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: #e8f5f0;
+      color: #2a7a5a;
+      border: 1px solid #b0dece;
+    }
+
+    /* Location badge — blue-grey */
+    .loc-badge {
+      flex-shrink: 0;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: #f0f4fb;
+      color: #4a6fa5;
+      border: 1px solid #c0d0eb;
+    }
+
+    /* Reminder time line */
+    .habit-card-reminder {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      color: #a89e8a;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .habit-card-reminder svg {
+      width: 12px;
+      height: 12px;
+      stroke: #c9a227;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      flex-shrink: 0;
+    }
+
+    /* Delete button */
+    .habit-delete-btn {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 8px;
+      background: #fff0ee;
+      color: #c94030;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.12s;
+      align-self: center;
+    }
+
+    .habit-delete-btn:hover {
+      background: #fddbd7;
+      transform: scale(1.08);
+    }
+
+    .habit-delete-btn:active {
+      transform: scale(0.95);
+    }
+
+    .habit-delete-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: #c94030;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── Monthly Tab ──────────────────────────────────── */
+    #panel-monthly.active {
+      display: block;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .monthly-wrap {
+      padding: 22px 22px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .monthly-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .month-arrow-btn {
+      width: 36px;
+      height: 36px;
+      border: 2px solid #e5dcca;
+      border-radius: 10px;
+      background: #faf6ec;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.16s, background 0.16s;
+    }
+
+    .month-arrow-btn:hover {
+      border-color: #c9a227;
+      background: #fff8e1;
+    }
+
+    .month-arrow-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: #8a8070;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .month-arrow-btn:hover svg {
+      stroke: #c9a227;
+    }
+
+    .monthly-title-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .monthly-name {
+      font-family: 'Amiri', serif;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #2c2a1e;
+      letter-spacing: 0.01em;
+      line-height: 1.15;
+    }
+
+    .monthly-sub {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #a89e8a;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .monthly-stats {
+      display: flex;
+      gap: 10px;
+    }
+
+    .stat-box {
+      flex: 1;
+      background: #faf6ec;
+      border: 2px solid #e5dcca;
+      border-radius: 14px;
+      padding: 16px 10px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stat-box--accent {
+      background: linear-gradient(135deg, #fffbe8, #fff8d6);
+      border-color: #d4b340;
+    }
+
+    .stat-value {
+      font-family: 'Amiri', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #2c2a1e;
+      line-height: 1;
+      letter-spacing: 0.01em;
+    }
+
+    .stat-box--accent .stat-value {
+      color: #b8901f;
+    }
+
+    .stat-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.67rem;
+      font-weight: 600;
+      color: #a89e8a;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .stat-box--accent .stat-label {
+      color: #c9a227;
+    }
+
+    /* ── Attendance Grid ──────────────────────────────── */
+    .attendance-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .attendance-habit {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .attendance-habit-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #6b6355;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .attendance-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .att-day {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .att-day--done {
+      background: #4caf7d;
+    }
+
+    .att-day--missed {
+      background: #e8897d;
+    }
+
+    .att-day--future {
+      background: transparent;
+      border: 1.5px dashed #d0c8b4;
+    }
+
+    .attendance-divider {
+      height: 1px;
+      background: #ede8db;
+      margin: 2px 0;
+    }
+
+    /* ── Dedication line + mini bar ───────────────────── */
+    .dedication-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 7px;
+      gap: 10px;
+    }
+
+    .dedication-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #a89e8a;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .dedication-label strong {
+      font-weight: 700;
+      color: #6b6355;
+    }
+
+    .dedication-bar-track {
+      flex: 1;
+      height: 5px;
+      border-radius: 99px;
+      background: #ede8db;
+      overflow: hidden;
+    }
+
+    .dedication-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dedication-bar-fill--green  { background: #4caf7d; }
+    .dedication-bar-fill--orange { background: #e8a44a; }
+    .dedication-bar-fill--red    { background: #e8897d; }
+
+    /* ── Monthly Bar Chart ────────────────────────────── */
+    .monthly-chart-wrap {
+      margin-top: 6px;
+      border-top: 2px solid #ede8db;
+      padding-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .monthly-chart-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #b0a590;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .monthly-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 80px;
+    }
+
+    .chart-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+    }
+
+    .chart-bar-wrap {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .chart-bar {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      min-height: 2px;
+      background: #d6ccb4;
+    }
+
+    .chart-bar--filled {
+      background: linear-gradient(180deg, #a8c256 0%, #4caf7d 100%);
+    }
+
+    .chart-bar--today {
+      background: linear-gradient(180deg, #d4b340 0%, #c9a227 100%);
+      box-shadow: 0 0 6px rgba(201, 162, 39, 0.4);
+    }
+
+    .chart-bar--future {
+      background: #ede8db;
+      min-height: 3px;
+    }
+
+    .chart-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.52rem;
+      font-weight: 500;
+      color: #c0b49a;
+      line-height: 1;
+      text-align: center;
+      margin-top: 3px;
+    }
+
+    .chart-label--today {
+      color: #c9a227;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Card ─────────────────────────────────────────── -->
+  <div class="card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="bismillah">﷽</div>
+      <h1>Habit Tracker</h1>
+      <p class="subtitle">Daily Progress</p>
+    </div>
+
+    <div class="header-rule"></div>
+
+    <!-- Date Bar -->
+    <div class="date-bar">
+      <span class="date-label">Today</span>
+      <span class="date-value" id="date-value">—</span>
+      <span class="date-dot"></span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" aria-selected="true">Today</button>
+      <button class="tab-btn"        role="tab" aria-selected="false">Habits</button>
+      <button class="tab-btn"        role="tab" aria-selected="false">Monthly</button>
+    </div>
+
+    <!-- Panels -->
+    <div class="panel active" id="panel-today">
+      <!-- Progress bar (hidden until there's something to show) -->
+      <div id="today-progress" class="progress-wrap" style="display:none;">
+        <div class="progress-header">
+          <span class="progress-label">Today's Progress</span>
+          <span class="progress-count" id="progress-count"><span id="progress-done">0</span> / <span id="progress-total">0</span> completed</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+      <!-- Habits list -->
+      <div id="today-list" class="today-list"></div>
+      <!-- Tasks list -->
+      <div id="today-tasks" class="today-list"></div>
+    </div>
+
+    <div class="panel" id="panel-habits">
+      <div id="habits-list-wrap" class="habits-list-wrap"></div>
+    </div>
+
+    <div class="panel" id="panel-monthly">
+      <div class="monthly-wrap">
+        <!-- Month navigation -->
+        <div class="monthly-nav">
+          <button class="month-arrow-btn" id="month-prev" aria-label="Previous month">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="monthly-title-block">
+            <span class="monthly-name" id="monthly-name">June</span>
+            <span class="monthly-sub" id="monthly-sub">Month 6 · 2026</span>
+          </div>
+          <button class="month-arrow-btn" id="month-next" aria-label="Next month">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <!-- Stat boxes -->
+        <div class="monthly-stats">
+          <div class="stat-box">
+            <span class="stat-value" id="stat-done">—</span>
+            <span class="stat-label">Done</span>
+          </div>
+          <div class="stat-box stat-box--accent">
+            <span class="stat-value" id="stat-pct">—</span>
+            <span class="stat-label">Completion</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="stat-missed">—</span>
+            <span class="stat-label">Missed</span>
+          </div>
+        </div>
+
+        <!-- Attendance grid -->
+        <div id="monthly-attendance-grid" class="attendance-section"></div>
+
+        <!-- Bar chart -->
+        <div id="monthly-bar-chart-wrap" class="monthly-chart-wrap" style="display:none;">
+          <div class="monthly-chart-title">Daily Habits Completed</div>
+          <div id="monthly-bar-chart" class="monthly-chart"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+
+  <!-- FAB -->
+  <button class="fab" id="fab" aria-label="Add new habit">
+    <svg viewBox="0 0 24 24">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5"  y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+
+  <!-- ── Modal ──────────────────────────────────────────── -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-label="Add habit">
+
+    <div class="modal">
+
+      <!-- Top border rendered via ::before -->
+
+      <!-- Header -->
+      <div class="modal-header">
+        <span class="modal-title">New Habit</span>
+        <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- Step indicator -->
+        <div class="step-indicator" id="step-indicator-wrap">Step <span id="step-current">1</span> of <span>6</span></div>
+
+        <!-- Step 1 — Habit name -->
+        <div class="step-panel active" id="step-panel-1">
+          <div class="step-label">Habit name</div>
+          <input
+            class="modal-input"
+            id="habit-name-input"
+            type="text"
+            placeholder="Habit name..."
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Step 2 — Priority -->
+        <div class="step-panel" id="step-panel-2">
+          <div class="step-label">Priority</div>
+          <div class="choice-group" id="priority-group">
+            <button class="choice-btn" data-value="High">🔴 High</button>
+            <button class="choice-btn" data-value="Medium">🟡 Medium</button>
+            <button class="choice-btn" data-value="Low">🟢 Low</button>
+          </div>
+        </div>
+
+        <!-- Step 3 — Frequency -->
+        <div class="step-panel" id="step-panel-3">
+          <div class="step-label">Frequency</div>
+          <div class="choice-group" id="frequency-group">
+            <button class="choice-btn" data-value="Daily">Daily</button>
+            <button class="choice-btn" data-value="Weekly">Weekly</button>
+            <button class="choice-btn" data-value="Monthly">Monthly</button>
+            <button class="choice-btn" data-value="Just Once">Just Once</button>
+          </div>
+        </div>
+
+        <!-- Step 4 — Location -->
+        <div class="step-panel" id="step-panel-4">
+          <div class="step-label">Location</div>
+          <div class="choice-group" id="location-group">
+            <button class="choice-btn" data-value="Home">🏠 Home</button>
+            <button class="choice-btn" data-value="Anywhere">🌍 Anywhere</button>
+            <button class="choice-btn" data-value="Office">🏢 Office</button>
+          </div>
+        </div>
+
+        <!-- Step 5 — Reminder time -->
+        <div class="step-panel" id="step-panel-5">
+          <div class="step-label">Reminder time</div>
+          <div class="time-picker-wrap">
+            <input
+              class="modal-input time-input"
+              id="reminder-time-input"
+              type="time"
+              autocomplete="off"
+            />
+            <p class="time-hint">Optional — leave blank to skip reminder</p>
+          </div>
+        </div>
+
+        <!-- Step 6 — Confirmation -->
+        <div class="step-panel" id="step-panel-6">
+          <div class="confirm-screen">
+            <div class="confirm-icon">
+              <svg viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <p class="confirm-title">Habit Added!</p>
+            <p class="confirm-sub">Your new habit has been created.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <!-- Step 1: single Next button -->
+        <div id="footer-step-1">
+          <button class="modal-next" id="btn-next-1">Next →</button>
+        </div>
+        <!-- Step 2: Back + Next -->
+        <div id="footer-step-2" class="modal-footer-row" style="display:none;">
+          <button class="modal-back" id="btn-back-2">← Back</button>
+          <button class="modal-next" id="btn-next-2">Next →</button>
+        </div>
+        <!-- Step 3: Back + Next -->
+        <div id="footer-step-3" class="modal-footer-row" style="display:none;">
+          <button class="modal-back" id="btn-back-3">← Back</button>
+          <button class="modal-next" id="btn-next-3">Next →</button>
+        </div>
+        <!-- Step 4: Back + Next -->
+        <div id="footer-step-4" class="modal-footer-row" style="display:none;">
+          <button class="modal-back" id="btn-back-4">← Back</button>
+          <button class="modal-next" id="btn-next-4">Next →</button>
+        </div>
+        <!-- Step 5: Back + Done -->
+        <div id="footer-step-5" class="modal-footer-row" style="display:none;">
+          <button class="modal-back" id="btn-back-5">← Back</button>
+          <button class="modal-next" id="btn-done">Done ✓</button>
+        </div>
+        <!-- Step 6: no footer (auto-close) -->
+        <div id="footer-step-6" style="display:none;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const tabs   = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.panel');
+
+    const panelMap = {
+      'Today'   : 'panel-today',
+      'Habits'  : 'panel-habits',
+      'Monthly' : 'panel-monthly'
+    };
+
+    tabs.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        // 1. Remove active from all tabs
+        tabs.forEach(function(t) {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+
+        // 2. Hide all panels
+        panels.forEach(function(p) {
+          p.classList.remove('active');
+        });
+
+        // 3. Activate clicked tab
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+
+        // 4. Show matching panel
+        var targetId = panelMap[btn.textContent.trim()];
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
+    // ── Modal open / close ─────────────────────────────
+    var overlay    = document.getElementById('modal-overlay');
+    var fab        = document.getElementById('fab');
+    var modalClose = document.getElementById('modal-close');
+    var habitInput = document.getElementById('habit-name-input');
+    var stepIndicator = document.getElementById('step-indicator-wrap');
+
+    function openModal() {
+      overlay.classList.add('open');
+      goToStep(1);
+      habitInput.focus();
+    }
+
+    function closeModal() {
+      overlay.classList.remove('open');
+      habitInput.value = '';
+      document.getElementById('reminder-time-input').value = '';
+      document.querySelectorAll('.choice-btn').forEach(function(b) {
+        b.classList.remove('selected');
+      });
+      stepIndicator.classList.remove('hidden');
+      // Re-render all tabs so new/deleted habits appear immediately
+      renderToday();
+      var activeTab = document.querySelector('.tab-btn.active');
+      if (activeTab && activeTab.textContent.trim() === 'Habits') renderHabitsTab();
+      if (activeTab && activeTab.textContent.trim() === 'Monthly') renderMonthlyTab();
+    }
+
+    fab.addEventListener('click', openModal);
+    modalClose.addEventListener('click', closeModal);
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ── Stepper ────────────────────────────────────────
+    var TOTAL_STEPS = 6;
+    var currentStep = 1;
+
+    function goToStep(n) {
+      for (var i = 1; i <= TOTAL_STEPS; i++) {
+        document.getElementById('step-panel-' + i).classList.remove('active');
+        var footer = document.getElementById('footer-step-' + i);
+        if (footer) footer.style.display = 'none';
+      }
+      document.getElementById('step-panel-' + n).classList.add('active');
+      var targetFooter = document.getElementById('footer-step-' + n);
+      if (targetFooter) {
+        targetFooter.style.display = (n === 1 || n === 6) ? 'block' : 'flex';
+      }
+      document.getElementById('step-current').textContent = n;
+      // Hide indicator on confirmation step
+      if (n === 6) {
+        stepIndicator.classList.add('hidden');
+      } else {
+        stepIndicator.classList.remove('hidden');
+      }
+      currentStep = n;
+    }
+
+    // Choice button toggle (single-select per group)
+    document.querySelectorAll('.choice-group').forEach(function(group) {
+      group.addEventListener('click', function(e) {
+        var btn = e.target.closest('.choice-btn');
+        if (!btn) return;
+        group.querySelectorAll('.choice-btn').forEach(function(b) {
+          b.classList.remove('selected');
+        });
+        btn.classList.add('selected');
+      });
+    });
+
+    // ── Next / Back wiring ─────────────────────────────
+    document.getElementById('btn-next-1').addEventListener('click', function() {
+      if (!habitInput.value.trim()) {
+        habitInput.focus();
+        habitInput.style.borderColor = '#e05c4b';
+        habitInput.style.boxShadow   = '0 0 0 3px rgba(224,92,75,0.12)';
+        habitInput.addEventListener('input', function fix() {
+          habitInput.style.borderColor = '';
+          habitInput.style.boxShadow   = '';
+          habitInput.removeEventListener('input', fix);
+        });
+        return;
+      }
+      goToStep(2);
+    });
+
+    document.getElementById('btn-back-2').addEventListener('click', function() { goToStep(1); });
+    document.getElementById('btn-next-2').addEventListener('click', function() { goToStep(3); });
+    document.getElementById('btn-back-3').addEventListener('click', function() { goToStep(2); });
+    document.getElementById('btn-next-3').addEventListener('click', function() { goToStep(4); });
+    document.getElementById('btn-back-4').addEventListener('click', function() { goToStep(3); });
+    document.getElementById('btn-next-4').addEventListener('click', function() { goToStep(5); });
+    document.getElementById('btn-back-5').addEventListener('click', function() { goToStep(4); });
+
+    document.getElementById('btn-done').addEventListener('click', function() {
+      saveHabit();
+      goToStep(6);
+      setTimeout(function() {
+        closeModal();
+      }, 1500);
+    });
+
+    // ── Helpers: read selected choice value ───────────
+    function getSelected(groupId) {
+      var btn = document.querySelector('#' + groupId + ' .choice-btn.selected');
+      return btn ? btn.getAttribute('data-value') : '';
+    }
+
+    // ── Save habit to localStorage ─────────────────────
+    function saveHabit() {
+      var entry = {
+        id:           Date.now(),
+        name:         habitInput.value.trim(),
+        priority:     getSelected('priority-group'),
+        frequency:    getSelected('frequency-group'),
+        location:     getSelected('location-group'),
+        reminderTime: document.getElementById('reminder-time-input').value || null,
+        createdAt:    new Date().toISOString()
+      };
+
+      // Route to "tasks" for one-off, "habits" for recurring
+      var storageKey = (entry.frequency === 'Just Once') ? 'tasks' : 'habits';
+
+      var existing = [];
+      try {
+        existing = JSON.parse(localStorage.getItem(storageKey)) || [];
+      } catch (e) {
+        existing = [];
+      }
+
+      existing.push(entry);
+      localStorage.setItem(storageKey, JSON.stringify(existing));
+
+      console.log('✅ Saved to "' + storageKey + '":', entry);
+    }
+
+    // ── Helpers ────────────────────────────────────────
+    function todayKey() {
+      var d = new Date();
+      var yy = d.getFullYear();
+      var mm = String(d.getMonth() + 1).padStart(2, '0');
+      var dd = String(d.getDate()).padStart(2, '0');
+      return 'done_' + yy + '-' + mm + '-' + dd;
+    }
+
+    // Tasks use a separate done key so habit/task namespaces don't collide
+    function todayTaskKey() {
+      return todayKey() + '_tasks';
+    }
+
+    function loadHabits() {
+      try { return JSON.parse(localStorage.getItem('habits')) || []; } catch(e) { return []; }
+    }
+
+    function loadTasks() {
+      try { return JSON.parse(localStorage.getItem('tasks')) || []; } catch(e) { return []; }
+    }
+
+    function loadDone() {
+      try { return JSON.parse(localStorage.getItem(todayKey())) || []; } catch(e) { return []; }
+    }
+
+    function loadDoneTasks() {
+      try { return JSON.parse(localStorage.getItem(todayTaskKey())) || []; } catch(e) { return []; }
+    }
+
+    function saveDone(doneArr) {
+      localStorage.setItem(todayKey(), JSON.stringify(doneArr));
+    }
+
+    function saveDoneTasks(doneArr) {
+      localStorage.setItem(todayTaskKey(), JSON.stringify(doneArr));
+    }
+
+    function priorityClass(p) {
+      if (!p) return 'low';
+      return p.toLowerCase();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Progress bar update ────────────────────────────
+    function updateProgress() {
+      var habits    = loadHabits();
+      var tasks     = loadTasks();
+      var doneH     = loadDone();
+      var doneT     = loadDoneTasks();
+      var total     = habits.length + tasks.length;
+      var completed = 0;
+
+      habits.forEach(function(h) { if (doneH.indexOf(h.name) !== -1) completed++; });
+      tasks.forEach(function(t)  { if (doneT.indexOf(t.name) !== -1) completed++; });
+
+      var progressWrap  = document.getElementById('today-progress');
+      var fillEl        = document.getElementById('progress-fill');
+      var doneEl        = document.getElementById('progress-done');
+      var totalEl       = document.getElementById('progress-total');
+
+      if (total === 0) {
+        progressWrap.style.display = 'none';
+        return;
+      }
+
+      progressWrap.style.display = 'block';
+      doneEl.textContent  = completed;
+      totalEl.textContent = total;
+      var pct = Math.round((completed / total) * 100);
+      fillEl.style.width  = pct + '%';
+    }
+
+    // ── Build a habit/task row ─────────────────────────
+    function buildRow(item, isDone, onToggle) {
+      var pClass = priorityClass(item.priority);
+      var pLabel = item.priority || '—';
+
+      var meta = [];
+      if (item.location)  meta.push(item.location);
+      if (item.frequency) meta.push(item.frequency);
+
+      var row = document.createElement('div');
+      row.className = 'habit-row' + (isDone ? ' done' : '');
+      row.setAttribute('data-name', item.name);
+
+      row.innerHTML =
+        '<div class="habit-checkbox">' +
+          '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' +
+        '</div>' +
+        '<div class="habit-info">' +
+          '<div class="habit-name">' + escapeHtml(item.name) + '</div>' +
+          (meta.length ? '<div class="habit-meta">' + escapeHtml(meta.join(' · ')) + '</div>' : '') +
+        '</div>' +
+        '<span class="priority-badge ' + pClass + '">' + escapeHtml(pLabel) + '</span>';
+
+      row.addEventListener('click', function() {
+        onToggle(this);
+        updateProgress();
+      });
+
+      return row;
+    }
+
+    // ── Render Today tab ───────────────────────────────
+    function renderToday() {
+      var habits    = loadHabits();
+      var tasks     = loadTasks();
+      var doneH     = loadDone();
+      var doneT     = loadDoneTasks();
+      var habitContainer = document.getElementById('today-list');
+      var taskContainer  = document.getElementById('today-tasks');
+
+      habitContainer.innerHTML = '';
+      taskContainer.innerHTML  = '';
+
+      // ── Habits section ──────────────────────────────
+      if (habits.length === 0) {
+        habitContainer.innerHTML =
+          '<div class="today-empty">' +
+            '<div class="empty-icon">' +
+              '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+            '</div>' +
+            '<span class="empty-text">No habits yet. Tap + to add your first habit!</span>' +
+          '</div>';
+      } else {
+        // Section header
+        var hHeader = document.createElement('div');
+        hHeader.className = 'section-header';
+        hHeader.innerHTML =
+          '<span class="section-header-label">Habits</span>' +
+          '<span class="section-header-rule"></span>' +
+          '<span class="section-count-badge">' + habits.length + '</span>';
+        habitContainer.appendChild(hHeader);
+
+        habits.forEach(function(habit) {
+          var isDone = doneH.indexOf(habit.name) !== -1;
+          var row = buildRow(habit, isDone, function(el) {
+            var name = el.getAttribute('data-name');
+            var done = loadDone();
+            var idx  = done.indexOf(name);
+            if (idx === -1) { done.push(name); } else { done.splice(idx, 1); }
+            saveDone(done);
+            el.classList.toggle('done', idx === -1);
+          });
+          habitContainer.appendChild(row);
+        });
+      }
+
+      // ── Tasks section ───────────────────────────────
+      if (tasks.length > 0) {
+        var tHeader = document.createElement('div');
+        tHeader.className = 'section-header';
+        tHeader.innerHTML =
+          '<span class="section-header-label">One-off tasks</span>' +
+          '<span class="section-header-rule"></span>' +
+          '<span class="section-count-badge">' + tasks.length + '</span>';
+        taskContainer.appendChild(tHeader);
+
+        tasks.forEach(function(task) {
+          var isDone = doneT.indexOf(task.name) !== -1;
+          var row = buildRow(task, isDone, function(el) {
+            var name = el.getAttribute('data-name');
+            var done = loadDoneTasks();
+            var idx  = done.indexOf(name);
+            if (idx === -1) { done.push(name); } else { done.splice(idx, 1); }
+            saveDoneTasks(done);
+            el.classList.toggle('done', idx === -1);
+          });
+          taskContainer.appendChild(row);
+        });
+      }
+
+      updateProgress();
+    }
+
+    // ── Re-render Today when switching to it ──────────
+    tabs.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (btn.textContent.trim() === 'Today') {
+          renderToday();
+        }
+        if (btn.textContent.trim() === 'Habits') {
+          renderHabitsTab();
+        }
+        if (btn.textContent.trim() === 'Monthly') {
+          renderMonthlyTab();
+        }
+      });
+    });
+
+    // ── Render Habits Tab ──────────────────────────────
+    function renderHabitsTab() {
+      var wrap = document.getElementById('habits-list-wrap');
+      var habits = loadHabits();
+      wrap.innerHTML = '';
+
+      if (habits.length === 0) {
+        wrap.innerHTML =
+          '<div class="habits-empty">' +
+            '<div class="empty-icon">' +
+              '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+            '</div>' +
+            '<span class="empty-text">No habits yet. Tap + to add your first habit!</span>' +
+          '</div>';
+        return;
+      }
+
+      // Section header
+      var header = document.createElement('div');
+      header.className = 'section-header';
+      header.innerHTML =
+        '<span class="section-header-label">All Habits</span>' +
+        '<span class="section-header-rule"></span>' +
+        '<span class="section-count-badge">' + habits.length + '</span>';
+      wrap.appendChild(header);
+
+      habits.forEach(function(habit) {
+        var pClass = priorityClass(habit.priority);
+        var pLabel = habit.priority || '—';
+
+        // Build badge HTML
+        var badges = '<span class="priority-badge ' + pClass + '">' + escapeHtml(pLabel) + '</span>';
+        if (habit.frequency) {
+          badges += '<span class="freq-badge">' + escapeHtml(habit.frequency) + '</span>';
+        }
+        if (habit.location) {
+          badges += '<span class="loc-badge">' + escapeHtml(habit.location) + '</span>';
+        }
+
+        // Reminder line
+        var reminderHtml = habit.reminderTime
+          ? '<div class="habit-card-reminder">' +
+              '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+              escapeHtml(habit.reminderTime) +
+            '</div>'
+          : '';
+
+        var card = document.createElement('div');
+        card.className = 'habit-card';
+        card.setAttribute('data-id', habit.id);
+
+        card.innerHTML =
+          '<div class="habit-card-info">' +
+            '<div class="habit-card-name">' + escapeHtml(habit.name) + '</div>' +
+            '<div class="habit-card-badges">' + badges + '</div>' +
+            reminderHtml +
+          '</div>' +
+          '<button class="habit-delete-btn" aria-label="Delete habit" title="Delete">' +
+            '<svg viewBox="0 0 24 24">' +
+              '<polyline points="3 6 5 6 21 6"/>' +
+              '<path d="M19 6l-1 14H6L5 6"/>' +
+              '<path d="M10 11v6"/><path d="M14 11v6"/>' +
+              '<path d="M9 6V4h6v2"/>' +
+            '</svg>' +
+          '</button>';
+
+        // Delete handler
+        card.querySelector('.habit-delete-btn').addEventListener('click', function(e) {
+          e.stopPropagation();
+          var id = parseInt(card.getAttribute('data-id'), 10);
+          var all = loadHabits();
+          var deletedHabit = all.find(function(h) { return h.id === id; });
+          var updated = all.filter(function(h) { return h.id !== id; });
+          localStorage.setItem('habits', JSON.stringify(updated));
+
+          // Clean up this habit's name from ALL done_* keys in localStorage
+          if (deletedHabit) {
+            var habitName = deletedHabit.name;
+            var keysToClean = [];
+            for (var k = 0; k < localStorage.length; k++) {
+              var lsKey = localStorage.key(k);
+              if (lsKey && lsKey.indexOf('done_') === 0 && lsKey.indexOf('_tasks') === -1) {
+                keysToClean.push(lsKey);
+              }
+            }
+            keysToClean.forEach(function(lsKey) {
+              try {
+                var arr = JSON.parse(localStorage.getItem(lsKey)) || [];
+                var cleaned = arr.filter(function(n) { return n !== habitName; });
+                if (cleaned.length !== arr.length) {
+                  localStorage.setItem(lsKey, JSON.stringify(cleaned));
+                }
+              } catch(e) {}
+            });
+          }
+
+          renderHabitsTab();
+          renderToday(); // keep Today tab in sync
+        });
+
+        wrap.appendChild(card);
+      });
+    }
+
+    // ── Monthly Tab state ──────────────────────────────
+    var MONTH_NAMES = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+
+    var _monthlyYear  = new Date().getFullYear();
+    var _monthlyMonth = new Date().getMonth(); // 0-based
+
+    function renderMonthlyTab() {
+      // Update title
+      document.getElementById('monthly-name').textContent =
+        MONTH_NAMES[_monthlyMonth];
+      document.getElementById('monthly-sub').textContent =
+        'Month ' + (_monthlyMonth + 1) + ' · ' + _monthlyYear;
+
+      // Calculate stats
+      var habits      = loadHabits();
+      var totalDone   = 0;
+      var totalMissed = 0;
+      var daysInMonth = new Date(_monthlyYear, _monthlyMonth + 1, 0).getDate();
+
+      for (var d = 1; d <= daysInMonth; d++) {
+        var mm  = String(_monthlyMonth + 1).padStart(2, '0');
+        var dd  = String(d).padStart(2, '0');
+        var key = 'done_' + _monthlyYear + '-' + mm + '-' + dd;
+
+        var doneArr = [];
+        try { doneArr = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
+
+        habits.forEach(function(h) {
+          if (doneArr.indexOf(h.name) !== -1) {
+            totalDone++;
+          } else {
+            // Only count days that have already passed (or today)
+            var dayDate  = new Date(_monthlyYear, _monthlyMonth, d);
+            var today    = new Date();
+            today.setHours(0,0,0,0);
+            if (dayDate <= today) {
+              totalMissed++;
+            }
+          }
+        });
+      }
+
+      var total = totalDone + totalMissed;
+      var pct   = total > 0 ? Math.round((totalDone / total) * 100) : 0;
+
+      document.getElementById('stat-done').textContent   = totalDone;
+      document.getElementById('stat-missed').textContent = totalMissed;
+      document.getElementById('stat-pct').textContent    = total > 0 ? pct + '%' : '—';
+
+      // ── Attendance grid ──────────────────────────────
+      var gridWrap = document.getElementById('monthly-attendance-grid');
+      gridWrap.innerHTML = '';
+
+      if (habits.length === 0) {
+        gridWrap.innerHTML =
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;min-height:120px;">' +
+            '<span style="font-family:\'Outfit\',sans-serif;font-size:0.84rem;color:#b0a590;text-align:center;max-width:220px;line-height:1.5;">No habits yet. Tap + to add your first habit!</span>' +
+          '</div>';
+        return;
+      }
+
+      var today2 = new Date();
+      today2.setHours(0, 0, 0, 0);
+
+      habits.forEach(function(habit, idx) {
+        // Divider between habits (not before the first)
+        if (idx > 0) {
+          var div = document.createElement('div');
+          div.className = 'attendance-divider';
+          gridWrap.appendChild(div);
+        }
+
+        var habitBlock = document.createElement('div');
+        habitBlock.className = 'attendance-habit';
+
+        var nameEl = document.createElement('div');
+        nameEl.className = 'attendance-habit-name';
+        nameEl.textContent = habit.name;
+        habitBlock.appendChild(nameEl);
+
+        var row = document.createElement('div');
+        row.className = 'attendance-row';
+
+        for (var d = 1; d <= daysInMonth; d++) {
+          var mm2  = String(_monthlyMonth + 1).padStart(2, '0');
+          var dd2  = String(d).padStart(2, '0');
+          var key2 = 'done_' + _monthlyYear + '-' + mm2 + '-' + dd2;
+
+          var dayDate2 = new Date(_monthlyYear, _monthlyMonth, d);
+
+          var box = document.createElement('div');
+          box.className = 'att-day';
+          box.title = dd2 + '/' + mm2;
+
+          if (dayDate2 > today2) {
+            box.classList.add('att-day--future');
+          } else {
+            var doneArr2 = [];
+            try { doneArr2 = JSON.parse(localStorage.getItem(key2)) || []; } catch(e) {}
+            if (doneArr2.indexOf(habit.name) !== -1) {
+              box.classList.add('att-day--done');
+            } else {
+              box.classList.add('att-day--missed');
+            }
+          }
+
+          row.appendChild(box);
+        }
+
+        habitBlock.appendChild(row);
+
+        // ── Dedication % + mini bar ────────────────────
+        var habitDone   = 0;
+        var habitPassed = 0;
+        for (var p = 1; p <= daysInMonth; p++) {
+          var pdDate = new Date(_monthlyYear, _monthlyMonth, p);
+          if (pdDate > today2) break; // stop at today
+          habitPassed++;
+          var pmm  = String(_monthlyMonth + 1).padStart(2, '0');
+          var pdd  = String(p).padStart(2, '0');
+          var pkey = 'done_' + _monthlyYear + '-' + pmm + '-' + pdd;
+          var pArr = [];
+          try { pArr = JSON.parse(localStorage.getItem(pkey)) || []; } catch(e) {}
+          if (pArr.indexOf(habit.name) !== -1) habitDone++;
+        }
+
+        var dedPct = habitPassed > 0 ? Math.round((habitDone / habitPassed) * 100) : 0;
+        var barClass = dedPct >= 75 ? 'dedication-bar-fill--green'
+                     : dedPct >= 50 ? 'dedication-bar-fill--orange'
+                     : 'dedication-bar-fill--red';
+
+        var dedLine = document.createElement('div');
+        dedLine.className = 'dedication-line';
+        dedLine.innerHTML =
+          '<span class="dedication-label">' +
+            escapeHtml(habit.name) + ' — <strong>' + dedPct + '% dedicated</strong>' +
+          '</span>' +
+          '<div class="dedication-bar-track">' +
+            '<div class="dedication-bar-fill ' + barClass + '" style="width:' + dedPct + '%"></div>' +
+          '</div>';
+
+        habitBlock.appendChild(dedLine);
+        gridWrap.appendChild(habitBlock);
+      });
+
+      // ── Overall bar chart ─────────────────────────────
+      var chartWrap  = document.getElementById('monthly-bar-chart-wrap');
+      var chartEl    = document.getElementById('monthly-bar-chart');
+      chartEl.innerHTML = '';
+
+      if (habits.length === 0) {
+        chartWrap.style.display = 'none';
+      } else {
+        chartWrap.style.display = 'flex';
+
+        // Build per-day counts
+        var dayCounts = [];
+        for (var cd = 1; cd <= daysInMonth; cd++) {
+          var cmm  = String(_monthlyMonth + 1).padStart(2, '0');
+          var cdd  = String(cd).padStart(2, '0');
+          var ckey = 'done_' + _monthlyYear + '-' + cmm + '-' + cdd;
+          var cArr = [];
+          try { cArr = JSON.parse(localStorage.getItem(ckey)) || []; } catch(e) {}
+          var count = 0;
+          habits.forEach(function(h) { if (cArr.indexOf(h.name) !== -1) count++; });
+          dayCounts.push(count);
+        }
+
+        var maxCount = habits.length || 1; // y-axis max = total habits
+
+        var todayD = today2.getDate();
+        var todayM = today2.getMonth();
+        var todayY = today2.getFullYear();
+        var isCurrentMonth = (_monthlyMonth === todayM && _monthlyYear === todayY);
+
+        for (var ci = 0; ci < daysInMonth; ci++) {
+          var dayNum   = ci + 1;
+          var isFuture = isCurrentMonth && dayNum > todayD;
+          var isToday  = isCurrentMonth && dayNum === todayD;
+          var count2   = dayCounts[ci];
+
+          // bar height as % of chart height (80px); future = 0 height visually
+          var heightPct = isFuture ? 0 : Math.round((count2 / maxCount) * 100);
+          // Ensure at least a stub for past/today days so the bar is visible
+          if (!isFuture && heightPct < 4) heightPct = 4;
+
+          var barClass2 = isFuture  ? 'chart-bar chart-bar--future'
+                        : isToday   ? 'chart-bar chart-bar--today'
+                        : count2 > 0 ? 'chart-bar chart-bar--filled'
+                        : 'chart-bar';
+
+          var labelClass = isToday ? 'chart-label chart-label--today' : 'chart-label';
+
+          var col = document.createElement('div');
+          col.className = 'chart-col';
+          col.title = dayNum + ' ' + MONTH_NAMES[_monthlyMonth] + ': ' + count2 + ' done';
+
+          col.innerHTML =
+            '<div class="chart-bar-wrap">' +
+              '<div class="' + barClass2 + '" style="height:' + heightPct + '%"></div>' +
+            '</div>' +
+            '<div class="' + labelClass + '">' + dayNum + '</div>';
+
+          chartEl.appendChild(col);
+        }
+      }
+    }
+
+    // Arrow buttons
+    document.getElementById('month-prev').addEventListener('click', function() {
+      _monthlyMonth--;
+      if (_monthlyMonth < 0) { _monthlyMonth = 11; _monthlyYear--; }
+      renderMonthlyTab();
+    });
+
+    document.getElementById('month-next').addEventListener('click', function() {
+      _monthlyMonth++;
+      if (_monthlyMonth > 11) { _monthlyMonth = 0; _monthlyYear++; }
+      renderMonthlyTab();
+    });
+
+    // ── Browser Notification Support ───────────────────
+    // Step 1: Request permission on page load (skip if already granted/denied)
+    function requestNotificationPermission() {
+      if (!('Notification' in window)) return; // browser does not support notifications
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+
+    // Step 2: Check every minute if any habit's reminder time matches current time,
+    //         then fire a notification for that habit.
+    function scheduleHabitNotifications() {
+      if (!('Notification' in window)) return;
+
+      setInterval(function() {
+        // Only run if user has granted permission
+        if (Notification.permission !== 'granted') return;
+
+        var habits = loadHabits();
+        var now    = new Date();
+        var currentHH = String(now.getHours()).padStart(2, '0');
+        var currentMM = String(now.getMinutes()).padStart(2, '0');
+        var currentTime = currentHH + ':' + currentMM; // format: "HH:MM"
+
+        habits.forEach(function(habit) {
+          // habit.reminderTime is saved as "HH:MM" string from the time input
+          if (habit.reminderTime && habit.reminderTime === currentTime) {
+            new Notification(habit.name, {
+              body: 'Time to do your habit!',
+              icon: '' // no icon needed; browser will use default
+            });
+          }
+        });
+      }, 60000); // check every 60 seconds (1 minute)
+    }
+
+    // ── On page load: render Today + set dynamic date ──
+    (function init() {
+      // Set dynamic date in date bar
+      var now = new Date();
+      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      var months = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+      var dateStr = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+      document.getElementById('date-value').textContent = dateStr;
+
+      renderToday();
+
+      var habits = loadHabits();
+      var tasks  = loadTasks();
+      console.log('📦 Loaded habits (' + habits.length + '):', habits);
+      console.log('📦 Loaded tasks  (' + tasks.length  + '):', tasks);
+
+      // Notification support
+      requestNotificationPermission();
+      scheduleHabitNotifications();
+    })();
+
+  </script>
+
+</body>
+</html>
